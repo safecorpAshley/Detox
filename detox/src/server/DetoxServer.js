@@ -1,5 +1,6 @@
 const _ = require('lodash');
-const WebSocketServer = require('ws').Server;
+const WebSocket = require('ws');
+const WebSocketServer = WebSocket.Server;
 
 class DetoxServer {
   constructor({ port, log }) {
@@ -62,7 +63,7 @@ class DetoxServer {
   sendToOtherRole(sessionId, role, action) {
     const otherRole = role === 'testee' ? 'tester' : 'testee';
     const ws = _.get(this.sessions, [sessionId, otherRole]);
-    if (ws) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
       this.sendAction(ws, action);
     } else {
       this.log.debug({ event: 'CANNOT_FORWARD' }, `role=${otherRole} not connected, cannot fw action (sessionId=${sessionId})`);
