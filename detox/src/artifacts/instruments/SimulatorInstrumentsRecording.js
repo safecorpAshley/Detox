@@ -40,6 +40,15 @@ class SimulatorInstrumentsRecording extends Artifact {
     await fs.remove(this.temporaryRecordingPath);
   }
 
+  assertDetoxInstrumentsInstalled(detoxInstrumentsPath) {
+    if (!fs.existsSync(this._detoxInstrumentsPath)) {
+
+      return false;
+    }
+
+    return true;
+  }
+
   _isClientConnected() {
     return this._client.isConnected && !this._client.pandingAppCrash;
   }
