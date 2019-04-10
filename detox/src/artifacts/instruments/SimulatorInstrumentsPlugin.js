@@ -14,6 +14,11 @@ class SimulatorInstrumentsPlugin extends WholeTestRecorderPlugin {
     this.shouldRecord = argparse.getArgValue('record-performance') === 'all';
   }
 
+  async onBeforeUninstallApp(event) {
+    await super.onBeforeUninstallApp(event);
+    await this._stopRecordingIfExists();
+  }
+
   async onBeforeTerminateApp(event) {
     await super.onBeforeTerminateApp(event);
     await this._stopRecordingIfExists();
