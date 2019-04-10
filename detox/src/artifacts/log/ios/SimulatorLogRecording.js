@@ -73,7 +73,10 @@ class SimulatorLogRecording extends Artifact {
     if (tail) {
       log.trace({ event: 'TAIL_UNWATCH' }, `unwatching ${stdxxx} log: ${logPath}`);
       tail.unwatch();
-      await new Promise((resolve) => setImmediate(resolve));
+
+      do {
+        await new Promise((resolve) => setImmediate(resolve));
+      } while (tail.queue.length > 0);
     }
 
     this[stdTail] = null;
