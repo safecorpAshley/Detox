@@ -98,7 +98,7 @@ class ArtifactPlugin {
    *
    * @protected
    * @async
-   * @param {Object} event - Device shutdown event object
+   * @param {Object} event - App termination event object
    * @param {string} event.deviceId - Current deviceId
    * @param {string} event.bundleId - Current bundleId
    * @return {Promise<void>} - when done
