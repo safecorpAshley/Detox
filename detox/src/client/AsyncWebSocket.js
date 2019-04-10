@@ -63,12 +63,19 @@ class AsyncWebSocket {
     this.log.trace({ event: 'WEBSOCKET_SEND' }, `${messageAsString}`);
 
     return new Promise((resolve, reject) => {
-      this.inFlightPromises[message.messageId] = {resolve, reject};
-      this.ws.send(messageAsString);
-      setTimeout(reject, this.timeout, new DetoxClientTimeoutError({
+      const handle = setTimeout(reject, this.timeout, new DetoxClientTimeoutError({
         jsonMessage: message,
         timeout: this.timeout
       }));
+
+      const reset = () => clearTimeout(handle);
+
+      this.inFlightPromises[message.messageId] = {
+        resolve: _.flow(resolve, reset),
+        reject: _.flow(reject, reset),
+      };
+
+      this.ws.send(messageAsString);
     });
   }
 
