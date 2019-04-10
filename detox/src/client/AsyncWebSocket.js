@@ -1,7 +1,7 @@
 const _ = require('lodash');
-const util = require('util');
 const log = require('../utils/logger').child({ __filename, class: 'AsyncWebSocket' });
 const WebSocket = require('ws');
+const DetoxClientTimeoutError = require('../errors/DetoxClientTimeoutError');
 
 class AsyncWebSocket {
 
@@ -12,6 +12,7 @@ class AsyncWebSocket {
     this.inFlightPromises = {};
     this.eventCallbacks = {};
     this.messageIdCounter = 0;
+    this.timeout = 60000;
   }
 
   async open() {
@@ -57,12 +58,17 @@ class AsyncWebSocket {
       throw new Error(`Can't send a message on a closed websocket, init the by calling 'open()'. Message:  ${JSON.stringify(message)}`);
     }
 
-    return new Promise(async(resolve, reject) => {
-      message.messageId = messageId || this.messageIdCounter++;
+    message.messageId = messageId || this.messageIdCounter++;
+    const messageAsString = JSON.stringify(message);
+    this.log.trace({ event: 'WEBSOCKET_SEND' }, `${messageAsString}`);
+
+    return new Promise((resolve, reject) => {
       this.inFlightPromises[message.messageId] = {resolve, reject};
-      const messageAsString = JSON.stringify(message);
-      this.log.trace({ event: 'WEBSOCKET_SEND' }, `${messageAsString}`);
       this.ws.send(messageAsString);
+      setTimeout(reject, this.timeout, new DetoxClientTimeoutError({
+        jsonMessage: message,
+        timeout: this.timeout
+      }));
     });
   }
 

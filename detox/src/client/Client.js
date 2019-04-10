@@ -1,6 +1,8 @@
 const AsyncWebSocket = require('./AsyncWebSocket');
 const actions = require('./actions/actions');
+const DetoxClientTimeoutError = require('../errors/DetoxClientTimeoutError');
 const argparse = require('../utils/argparse');
+const log = require('../utils/logger').child({ __filename });
 
 class Client {
   constructor(config) {
@@ -119,10 +121,19 @@ class Client {
   }
 
   async sendAction(action) {
-    const response = await this.ws.send(action, action.messageId);
-    const parsedResponse = JSON.parse(response);
-    await action.handle(parsedResponse);
-    return parsedResponse;
+    try {
+      const response = await this.ws.send(action, action.messageId);
+      const parsedResponse = JSON.parse(response);
+      await action.handle(parsedResponse);
+      return parsedResponse;
+    } catch (e) {
+      if (e instanceof DetoxClientTimeoutError) {
+        const msg = e.message + ' The action was:\n' + JSON.stringify(e.json);
+        log.error({ event: 'TESTEE_NOT_RESPONDING' }, msg);
+      }
+
+      throw e;
+    }
   }
 
   slowInvocationStatus() {
