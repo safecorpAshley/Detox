@@ -3,9 +3,10 @@ const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 
 class DetoxServer {
-  constructor({ port, log }) {
+  constructor({ port, log, standalone = false }) {
     this.wss = new WebSocketServer({ port });
     this.sessions = {};
+    this.standalone = standalone;
     this.log = log.child({ __filename });
     this.log.info(`server listening on localhost:${this.wss.options.port}...`);
     this._setup();
@@ -44,7 +45,7 @@ class DetoxServer {
         if (sessionId && role) {
           this.log.debug({ event: 'DISCONNECT' }, `role=${role}, sessionId=${sessionId}`);
 
-          if (role === 'tester') {
+          if (this.standalone && role === 'tester') {
             this.sendToOtherRole(sessionId, role, { type: 'testerDisconnected' });
           }
 
