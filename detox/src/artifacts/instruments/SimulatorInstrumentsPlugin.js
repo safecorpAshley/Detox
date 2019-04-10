@@ -9,13 +9,9 @@ class SimulatorInstrumentsPlugin extends WholeTestRecorderPlugin {
   constructor(config) {
     super(config);
 
-    const recordPerformance = argparse.getArgValue('record-performance');
-
     this.client = config.client;
-    this.shouldRecord = recordPerformance !== 'none'
-      ? Boolean(recordPerformance)
-      : false;
-    this.enabled = this.shouldRecord;
+    this.enabled = false;
+    this.shouldRecord = argparse.getArgValue('record-performance') === 'all';
   }
 
   async onBeforeTerminateApp(event) {
@@ -37,36 +33,43 @@ class SimulatorInstrumentsPlugin extends WholeTestRecorderPlugin {
   async onBeforeLaunchApp(event) {
     await super.onBeforeLaunchApp(event);
 
-    if (this.shouldRecord) {
-      const instrumentsPath = event.launchArgs['-instrumentsPath'];
-      await this._assertDetoxInstrumentsInstalled(instrumentsPath);
+    if (!this.enabled && this.shouldRecord) {
+      const isInstalled = await this._assertDetoxInstrumentsInstalled(event.launchArgs['-instrumentsPath']);
+      this.enabled = this.shouldRecord = isInstalled;
     }
 
-    if (this.testRecording && this.enabled) {
+    const isInsideRunningTest = !!this.context.testSummary;
+    if (this.enabled && isInsideRunningTest && !this.testRecording) {
+      this.testRecording = this.createTrackedTestRecording();
+    }
+
+    if (this.testRecording) {
       event.launchArgs['-recordingPath'] = this.testRecording.temporaryRecordingPath;
-    }
-  }
-
-  async _assertDetoxInstrumentsInstalled(instrumentsPath = SimulatorInstrumentsPlugin.DEFAULT_INSTRUMENTS_PATH) {
-    if (await fs.exists(instrumentsPath)) {
-      this.enabled = this.shouldRecord;
-    } else {
-      this.enabled = false;
-
-      log.warn({ event: 'INSTRUMENTS_NOT_FOUND' },
-        `Failed to find Detox Instruments app at path: ${instrumentsPath}\n` +
-        `To enable recording performance profiles, please follow: https://github.com/wix/DetoxInstruments#installation`);
     }
   }
 
   async onLaunchApp(event) {
     await super.onLaunchApp(event);
 
-    if (this.testRecording && this.enabled) {
-      // doing a nominal start, without doing anything useful
-      // to preserve correct recording state
-      await this.testRecording.start({ dry: true });
+    if (this.testRecording) {
+      await this.testRecording.start({ dry: true }); // start nominally, to set a correct recording state
     }
+  }
+
+  async _assertDetoxInstrumentsInstalled(customInstrumentsPath) {
+    const instrumentsPath = customInstrumentsPath || SimulatorInstrumentsPlugin.DEFAULT_INSTRUMENTS_PATH;
+    if (await fs.exists(instrumentsPath)) {
+      return true;
+    }
+
+    const hint = customInstrumentsPath
+      ? `Please verify that -instrumentsPath argument points to the existing Detox Instruments installation.`
+      : `To enable recording performance profiles, please follow: https://github.com/wix/DetoxInstruments#installation`;
+
+    log.warn({ event: 'INSTRUMENTS_NOT_FOUND' },
+      `Failed to find Detox Instruments app at path: ${instrumentsPath}\n${hint}`);
+
+    return false;
   }
 
   createTestRecording() {
