@@ -7,6 +7,8 @@ describe('Client', () => {
   let WebSocket;
   let Client;
   let client;
+  let logger;
+  let DetoxClientTimeoutError;
 
   beforeEach(() => {
     jest.mock('../utils/logger');
@@ -15,6 +17,10 @@ describe('Client', () => {
     jest.mock('../utils/argparse');
     argparse = require('../utils/argparse');
 
+    jest.mock('../utils/logger');
+    logger = require('../utils/logger');
+
+    DetoxClientTimeoutError = require('../errors/DetoxClientTimeoutError');
     Client = require('./Client');
   });
 
@@ -32,6 +38,18 @@ describe('Client', () => {
 
     } catch (ex) {
       expect(ex).toBeDefined();
+    }
+  });
+
+  it(`reloadReactNative() - should throw if receives wrong response from device`, async () => {
+    await connect();
+    client.ws.send.mockRejectedValueOnce(new DetoxClientTimeoutError({ json: {}, timeout: 100 }));
+
+    try {
+      await client.sendAction({});
+    } catch (ex) {
+      expect(ex).toBeInstanceOf(DetoxClientTimeoutError);
+      expect(logger.error).toHaveBeenCalledWith({ event: 'TESTEE_NOT_RESPONDING' }, expect.any(String));
     }
   });
 
