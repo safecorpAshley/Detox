@@ -5,6 +5,7 @@
 ## Requirements
 
 * Make sure you have Xcode installed (tested with Xcode 8.1-8.2).
+* Make sure you have Homebrew installed (https://brew.sh/)
 * make sure you have node installed (`brew install node`, node 8.3.0 and up is required for native async-await support, otherwise you'll have to babel the tests).
 * Make sure you have react-native dependencies installed:
    * react-native-cli is installed (`npm install -g react-native-cli`)
@@ -52,3 +53,24 @@
  detox test --configuration ios.sim.debug
  ```
  This action will open a new simulator and run the tests on it.
+ 
+ ### Best Practices
+ * 
+ 
+ *Reload the app before each test 
+    
+ ```sh 
+ //React Native App
+  beforeEach(async () => {
+     await device.reloadReactNative();
+   });
+   
+  //Expo App
+   beforeEach(async () => {
+      await reloadApp();
+    });
+ ``` 
+ 
+   
+   
+ 
