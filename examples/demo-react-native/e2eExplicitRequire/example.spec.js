@@ -19,6 +19,10 @@ describe('Example', () => {
     await expect(element(by.text('World!!!'))).toBeVisible();
   });
 
+  it('should show safe screen after tap', async () => {
+    await element(by.id('safe_demo')).tap();
+    await expect(element(by.text('Safe!!!'))).toBeVisible();
+  })
   it('waitFor should be exported', async () => {
     await waitFor(element(by.id('welcome'))).toExist().withTimeout(2000);
     await expect(element(by.id('welcome'))).toExist();
