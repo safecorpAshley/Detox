@@ -55,7 +55,7 @@
  This action will open a new simulator and run the tests on it.
  
  ### Best Practices
- * 
+ 
  
  *Reload the app before each test 
     
