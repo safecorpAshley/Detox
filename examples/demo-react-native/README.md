@@ -71,6 +71,29 @@
     });
  ``` 
  
+ * Add the `testID` property to assist with finding elements
+ 
+ ```sh 
+ View:
+ <View>
+   <TouchableOpacity testID='MyUniqueId123'>
+     <Text>Some button</Text>
+   </TouchableOpacity>
+ </View>
+
+Test:
+await element(by.id('MyUniqueId123')).tap();
+
+```
+ ### Folder Organization
+ 
+ /e2e
+  
+  * /sanity
+  * /actions
+  * /matchers 
+ 
+ 
    
    
  
